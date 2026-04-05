@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Enter PIN to view box contents">
+    <title>QRBox – Unlock Box</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/styles.css">
+</head>
+
+<body>
+    <div class="container" id="app">
+        <!-- Header -->
+        <div style="text-align:center;padding-top:20px;margin-bottom:8px">
+            <div class="logo-wrapper" style="margin:0 auto 12px">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                        d="M3 11h8V3H3v8zm2-6h4v4H5V5zm8-2v8h8V3h-8zm6 6h-4V5h4v4zM3 21h8v-8H3v8zm2-6h4v4H5v-4zm13 2h2v4h-4v-2h2v-2zm-3-2h2v2h-2v-2zm-2 4h2v2h-2v-2zm2 2h2v2h-2v-2zm2-2h2v2h-2v-2zm2-4h2v4h-2v-4zm0-2h2v2h-2v-2zm-4 0h2v2h-2v-2z" />
+                </svg>
+            </div>
+            <p id="box-id-display"
+                style="font-size:12px;color:var(--color-text-secondary);font-family:monospace;margin-bottom:4px"></p>
+        </div>
+
+        <!-- PIN Entry -->
+        <div id="pin-section" class="center-content" style="flex:unset">
+            <div class="card" style="max-width:360px;margin:0 auto">
+                <h2 class="card-header">Enter PIN</h2>
+                <p class="card-subheader">Enter the 4-digit PIN to view this box's contents</p>
+                <p id="error-msg" class="error-message" style="display:none"></p>
+                <form id="pin-form">
+                    <div class="pin-group">
+                        <input type="text" inputmode="numeric" maxlength="1" class="pin-input" data-index="0"
+                            autocomplete="off">
+                        <input type="text" inputmode="numeric" maxlength="1" class="pin-input" data-index="1"
+                            autocomplete="off">
+                        <input type="text" inputmode="numeric" maxlength="1" class="pin-input" data-index="2"
+                            autocomplete="off">
+                        <input type="text" inputmode="numeric" maxlength="1" class="pin-input" data-index="3"
+                            autocomplete="off">
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="unlock-btn">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                            <path
+                                d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM12 17c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" />
+                        </svg>
+                        Unlock
+                    </button>
+                </form>
+                <div style="text-align:center;margin-top:16px">
+                    <button id="forgot-pin-btn" class="link-btn" type="button">Forgot PIN?</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Forgot PIN Section -->
+        <div id="forgot-pin-section" style="display:none">
+            <div class="card" style="max-width:360px;margin:0 auto">
+                <h2 class="card-header">Forgot PIN</h2>
+                <p class="card-subheader">Enter the email associated with this box's owner account. We'll send the PIN
+                    to that email.</p>
+                <p id="forgot-error-msg" class="error-message" style="display:none"></p>
+                <p id="forgot-success-msg" class="success-message" style="display:none"></p>
+                <form id="forgot-pin-form">
+                    <div style="margin-bottom:16px">
+                        <input type="email" id="forgot-email" class="text-input" placeholder="Owner's email address"
+                            required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="forgot-submit-btn">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                            <path
+                                d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" />
+                        </svg>
+                        Send PIN
+                    </button>
+                </form>
+                <div style="text-align:center;margin-top:16px">
+                    <button id="back-to-pin-btn" class="link-btn" type="button">← Back to PIN entry</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading -->
+        <div id="loading-section" style="display:none;text-align:center;padding:60px 0">
+            <span class="spinner"></span>
+            <p style="margin-top:16px;color:var(--color-text-secondary)">Verifying PIN...</p>
+        </div>
+
+        <!-- Inventory -->
+        <div id="inventory-section" style="display:none;flex:1">
+            <div class="box-header">
+                <h1 id="box-name" class="box-name"></h1>
+                <div class="box-meta">
+                    <span class="meta-chip" id="box-location">
+                        <svg viewBox="0 0 24 24">
+                            <path
+                                d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
+                        </svg>
+                        <span id="box-location-text"></span>
+                    </span>
+                    <span class="meta-chip" id="box-desc-chip" style="display:none">
+                        <svg viewBox="0 0 24 24">
+                            <path
+                                d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 9h-2v2H9v-2H7V9h2V7h2v2h2v2zm-1-7.5L17.5 9H12V3.5z" />
+                        </svg>
+                        <span id="box-desc-text"></span>
+                    </span>
+                </div>
+            </div>
+            <div class="items-section">
+                <div class="items-title">Items <span class="items-count" id="items-count">0</span></div>
+                <div id="items-list"></div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>Powered by <a href="/">QRBox</a></p>
+        </div>
+    </div>
+
+    <script>
+        // ── Config ──
+        const API_URL = 'https://us-central1-qrbox-cbcbb.cloudfunctions.net/verifyPinAndGetBox';
+        const FORGOT_PIN_URL = 'https://us-central1-qrbox-cbcbb.cloudfunctions.net/forgotPin';
+
+        // ── Get boxId from URL path ──
+        const pathParts = window.location.pathname.split('/').filter(Boolean);
+        const boxId = pathParts.length >= 2 ? pathParts[pathParts.length - 1] : null;
+
+        if (!boxId) {
+            window.location.href = '/';
+        }
+
+        document.getElementById('box-id-display').textContent = boxId;
+
+        // ── PIN Input Logic ──
+        const inputs = document.querySelectorAll('.pin-input');
+        const form = document.getElementById('pin-form');
+        const errorMsg = document.getElementById('error-msg');
+        const unlockBtn = document.getElementById('unlock-btn');
+
+        inputs[0].focus();
+
+        inputs.forEach((input, i) => {
+            input.addEventListener('input', (e) => {
+                const val = e.target.value.replace(/\D/g, '');
+                e.target.value = val.slice(-1);
+                if (val && i < 3) inputs[i + 1].focus();
+
+                // Auto-submit
+                const pin = Array.from(inputs).map(inp => inp.value).join('');
+                if (pin.length === 4) submitPin(pin);
+            });
+
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Backspace' && !input.value && i > 0) {
+                    inputs[i - 1].focus();
+                }
+            });
+        });
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const pin = Array.from(inputs).map(inp => inp.value).join('');
+            if (pin.length === 4) submitPin(pin);
+        });
+
+        // ── Forgot PIN Logic ──
+        document.getElementById('forgot-pin-btn').addEventListener('click', () => {
+            showSection('forgot');
+        });
+
+        document.getElementById('back-to-pin-btn').addEventListener('click', () => {
+            showSection('pin');
+            document.getElementById('forgot-error-msg').style.display = 'none';
+            document.getElementById('forgot-success-msg').style.display = 'none';
+        });
+
+        document.getElementById('forgot-pin-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('forgot-email').value.trim();
+            if (!email) return;
+
+            const forgotBtn = document.getElementById('forgot-submit-btn');
+            const forgotError = document.getElementById('forgot-error-msg');
+            const forgotSuccess = document.getElementById('forgot-success-msg');
+
+            forgotBtn.disabled = true;
+            forgotBtn.innerHTML = '<span class="spinner"></span> Sending...';
+            forgotError.style.display = 'none';
+            forgotSuccess.style.display = 'none';
+
+            try {
+                const res = await fetch(FORGOT_PIN_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ boxId, email })
+                });
+
+                const data = await res.json();
+
+                if (!res.ok || !data.success) {
+                    forgotError.textContent = data.error || 'Could not send PIN. Please check the email.';
+                    forgotError.style.display = 'block';
+                } else {
+                    forgotSuccess.textContent = 'PIN has been sent to your email! Check your inbox.';
+                    forgotSuccess.style.display = 'block';
+                }
+            } catch (err) {
+                forgotError.textContent = 'Unable to connect. Please try again.';
+                forgotError.style.display = 'block';
+            }
+
+            forgotBtn.disabled = false;
+            forgotBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg> Send PIN';
+        });
+
+        // ── Submit PIN ──
+        async function submitPin(pin) {
+            showSection('loading');
+            errorMsg.style.display = 'none';
+
+            try {
+                const res = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ boxId, pin })
+                });
+
+                const data = await res.json();
+
+                if (!res.ok || !data.success) {
+                    showError(data.error || 'Incorrect PIN. Please try again.');
+                    return;
+                }
+
+                renderInventory(data.box, data.items || []);
+            } catch (err) {
+                showError('Unable to connect. Please check your internet connection.');
+            }
+        }
+
+        function showError(msg) {
+            errorMsg.textContent = msg;
+            errorMsg.style.display = 'block';
+            showSection('pin');
+            inputs.forEach(inp => { inp.value = ''; });
+            inputs[0].focus();
+        }
+
+        function showSection(section) {
+            document.getElementById('pin-section').style.display = section === 'pin' ? '' : 'none';
+            document.getElementById('forgot-pin-section').style.display = section === 'forgot' ? '' : 'none';
+            document.getElementById('loading-section').style.display = section === 'loading' ? '' : 'none';
+            document.getElementById('inventory-section').style.display = section === 'inventory' ? '' : 'none';
+        }
+
+        // ── Render Inventory ──
+        function renderInventory(box, items) {
+            document.getElementById('box-name').textContent = box.name;
+            document.getElementById('box-location-text').textContent = box.location || 'Unknown';
+
+            if (box.description) {
+                document.getElementById('box-desc-chip').style.display = '';
+                document.getElementById('box-desc-text').textContent = box.description;
+            }
+
+            document.getElementById('items-count').textContent = items.length;
+
+            const list = document.getElementById('items-list');
+            if (items.length === 0) {
+                list.innerHTML = `
+          <div class="empty-state">
+            <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM8 20H4v-4h4v4zm0-6H4v-4h4v4zm0-6H4V4h4v4zm6 12h-4v-4h4v4zm0-6h-4v-4h4v4zm0-6h-4V4h4v4zm6 12h-4v-4h4v4zm0-6h-4v-4h4v4zm0-6h-4V4h4v4z"/></svg>
+            <p>This box is empty</p>
+          </div>`;
+            } else {
+                list.innerHTML = items.map(item => `
+          <div class="item-card">
+            ${item.imageUrl
+                        ? `<img src="${item.imageUrl}" alt="${item.name}" class="item-image">`
+                        : `<div class="item-icon"><svg viewBox="0 0 24 24"><path d="M12 2l-5.5 9h11L12 2zm0 3.84L13.93 9h-3.87L12 5.84zM17.5 13c-2.49 0-4.5 2.01-4.5 4.5s2.01 4.5 4.5 4.5 4.5-2.01 4.5-4.5-2.01-4.5-4.5-4.5zm0 7c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5zM3 21.5h8v-8H3v8zm2-6h4v4H5v-4z"/></svg></div>`
+                    }
+            <div class="item-info">
+              <div class="item-name">${item.name}</div>
+              ${item.description ? `<div class="item-desc">${item.description}</div>` : ''}
+            </div>
+            <div class="item-qty">x${item.quantity}</div>
+          </div>`
+                ).join('');
+            }
+
+            showSection('inventory');
+        }
+    </script>
+</body>
+
+</html>
